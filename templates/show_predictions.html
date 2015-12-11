@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block body %}
+    <form action="{{ url_for('add_prediction') }}" method=post class=add-prediction>
+        <dl>
+            <dt>Please paste text from all your reviews here:
+            <dd><textarea name=lyrics rows=30 cols=80></textarea>
+            <dd><input type=submit value=Predict>
+        </dl>
+    </form>
+    <ul class=predictions>
+        <li>With these reviews your business would be rated {{ (predictions[0].artist).encode('ascii','ignore')[1:-1].strip('.') }} stars on Yelp!
+
+{% endblock %}
