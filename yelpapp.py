@@ -1,6 +1,3 @@
-"""A Flask web application that provides an interface to enter
-lyrics and receive an artist prediction.
-"""
 
 # Standard imports
 import os
@@ -10,7 +7,7 @@ import sqlite3
 from flask import Flask, request, g, redirect, url_for, render_template, flash
 
 # Import our classifier class
-from lyrics_classifier import LyricsClf
+from yelp_classifier import YelpClf
 
 # create the app as a global variable
 app = Flask(__name__)
@@ -18,14 +15,14 @@ app = Flask(__name__)
 # Specify a basic configuration
 # (Remember that this step happens in the application context)
 app.config.update(dict(
-    DATABASE=os.path.join(app.root_path, 'lyrics.db'),
+    DATABASE=os.path.join(app.root_path, 'reviews.db'),
     DEBUG=True,
     SECRET_KEY='my super secret string',
     CLF_PICKLE='classifier.p'
 ))
 
 # Load our pickled classifier before servicing requests
-clf = LyricsClf(app.config['CLF_PICKLE'])
+clf = YelpClf(app.config['CLF_PICKLE'])
 
 def connect_db():
     """Connects to the database defined in the application configuration.
@@ -79,8 +76,7 @@ def close_db(error):
 
 @app.route('/')
 def show_predictions():
-    """Main view to display all lyric/artist predictions.
-    Returns them in descending order by id.
+    """Main view to display all rating predictions.
     """
     db = get_db()
     cur = db.execute('SELECT lyrics, artist FROM predictions ORDER BY id DESC')
@@ -90,31 +86,20 @@ def show_predictions():
 
 @app.route('/add', methods=['POST'])
 def add_prediction():
-    """Predicts an artist based on the lyrics posted in the form.
-    Finds the lyrics in the request object's form dictionary.
-    Calls our classifier's predictArtist routine to return an artist
-    name. Connects to the database and inserts the prediction.
-    Flashes a message that the prediction was posted. Redirects the
-    user from the /add endpoint back to the show_predictions endpoint.
-    """
-    lyrics = request.form['lyrics']
-    artistName = clf.predictArtist(lyrics)
+    reviews = request.form['reviews']
+    rating = clf.predictRating(reviews)
     db = get_db()
     # remember how we set our SQL driver to treat rows as dictionaries? win!
     # note: question mark notation safer than string replacement
     # helps to prevent SQLi attacks
     db.execute('INSERT INTO predictions (lyrics, artist) values (?, ?)',
-        [lyrics, str(artistName)])
+        [reviews, str(rating)])
     db.commit()
     flash('Prediction was successfully posted')
     # another example where the framework is omnipotent: url_for()
     return redirect(url_for('show_predictions'))
 # end of add_prediction()
 
-# This condition is true when we are executed as a python script. 
-# It is not true if we are imported. This is how we can run:
-# >>> from lyricsapp import init_db
-# >>> init_db()
 if __name__=="__main__":
     # Tell Flask to run!
     app.run()
