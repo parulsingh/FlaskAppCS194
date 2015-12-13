@@ -10,9 +10,6 @@ import scipy.sparse as sp
 # A new import
 import pickle
 
-# Local imports for the Million Song Dataset stemming algorithm
-from msd.stem import transformLyrics
-
 class LyricsClf():
     """A MultinomialNB classifier for predicting artists from lyrics.
     Offers train, save, and load routines for offline and startup
@@ -27,17 +24,15 @@ class LyricsClf():
         self.artistLabels = dict()
         self.vectorizer = None
         self.clf = None
-        if picklefile:
-            self.load(picklefile)
         f = open('business_unigram_feature_names', 'r')
         self.unigram_feature_names = pickle.load(f)
         f = open('bigram_feature_names', 'r')
         self.bigram_feature_names = pickle.load(f)
-        f = open('trigram_feature_names', 'r')
-        self.trigram_feature_names = pickle.load(f)
+        f = open('trigam_vocab', 'r')
+        trigram_vocab = pickle.load(f)
+        self.trigram_feature_names = CountVectorizer(vocabulary=trigram_vocab, ngram_range=(3,3))
         f = open('logreg_business_rating_classifier', 'r')
         self.clf = pickle.load(f)
-
 
     def predictArtist(self,lyrics):
         """Returns an artist name given sample song lyrics.
